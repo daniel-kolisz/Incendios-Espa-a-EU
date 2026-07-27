@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet.photon.css">
+        <!-- Metadatos Open Graph: para que LinkedIn, WhatsApp, X, etc. generen
+             una vista previa (tarjeta) bonita al compartir el enlace -->
+        <meta property="og:title" content="Incendios en tiempo real en Europa (24h)">
+        <meta property="og:description" content="Incendios activos en Europa en tiempo real: datos NASA FIRMS, imágenes Sentinel-2 y cartografía del IGN.">
+        <meta property="og:url" content="https://hidden-mountain-b26f.danielkoliszram.workers.dev/">
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="Incendios en tiempo real - Europa">
+        <meta name="twitter:card" content="summary">
+        <meta name="twitter:title" content="Incendios en tiempo real en Europa (24h)">
+        <meta name="twitter:description" content="Incendios activos en Europa en tiempo real: datos NASA FIRMS, imágenes Sentinel-2 y cartografía del IGN.">
+        <meta name="description" content="Incendios activos en Europa en tiempo real: datos NASA FIRMS, imágenes Sentinel-2 y cartografía del IGN.">
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        .map-title {
+            position: absolute;
+            top: 12px;
+            left: 60px;
+            z-index: 1000;
+            background-color: rgba(255, 255, 255, 0.92);
+            padding: 8px 16px;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            font-family: Arial, Helvetica, sans-serif;
+            pointer-events: auto;
+        }
+        .map-title h1 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: bold;
+            color: #000000;
+        }
+        .fire-counter {
+            position: absolute;
+            top: 62px;
+            left: 60px;
+            z-index: 1000;
+            background-color: rgba(255, 255, 255, 0.92);
+            padding: 6px 16px;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            font-family: Arial, Helvetica, sans-serif;
+            pointer-events: auto;
+            font-size: 13px;
+            color: #333;
+        }
+        .fire-counter b {
+            color: #d84315;
+            font-size: 15px;
+        }
+        .fire-legend {
+            position: absolute;
+            top: 112px;
+            left: 60px;
+            z-index: 1000;
+            background-color: rgba(255, 255, 255, 0.92);
+            padding: 4px 10px;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            color: #333;
+            pointer-events: auto;
+        }
+        .fire-legend summary {
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 11px;
+            padding: 4px 0;
+            list-style: none;
+        }
+        .fire-legend summary::-webkit-details-marker {
+            display: none;
+        }
+        .fire-legend summary::before {
+            content: "▸ ";
+        }
+        .fire-legend[open] summary::before {
+            content: "▾ ";
+        }
+        .fire-legend .legend-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 3px;
+            white-space: nowrap;
+        }
+        .fire-legend .legend-swatch {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 6px;
+            border: 1px solid rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+        .credits-box {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            z-index: 1000;
+            background-color: rgba(255, 255, 255, 0.88);
+            padding: 4px 10px;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10px;
+            line-height: 1.4;
+            color: #333;
+            max-width: 260px;
+            pointer-events: auto;
+        }
+        .credits-box summary {
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 11px;
+            padding: 4px 0;
+            list-style: none;
+        }
+        .credits-box .author-line {
+            font-size: 11px;
+            font-weight: bold;
+            padding: 4px 0 2px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            margin-bottom: 2px;
+        }
+        .credits-box .author-line a {
+            font-weight: normal;
+        }
+        .credits-box summary::-webkit-details-marker {
+            display: none;
+        }
+        .credits-box summary::before {
+            content: "▸ ";
+        }
+        .credits-box[open] summary::before {
+            content: "▾ ";
+        }
+        .credits-box .credits-content {
+            padding-bottom: 6px;
+        }
+        .credits-box a {
+            color: #1a5276;
+            text-decoration: none;
+        }
+        .credits-box a:hover {
+            text-decoration: underline;
+        }
+        .author-box {
+            position: absolute;
+            bottom: 58px;
+            left: 12px;
+            z-index: 1000;
+            background-color: rgba(255, 255, 255, 0.92);
+            padding: 8px 14px;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            font-weight: bold;
+            color: #222;
+            pointer-events: auto;
+        }
+        .author-box a {
+            color: #1a5276;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .author-box a:hover {
+            text-decoration: underline;
+        }
+        /* Escala gráfica: se quita el fondo blanco tipo "pastilla" y se deja
+           solo la línea con el número, con contorno blanco para que se lea
+           bien encima de cualquier capa base */
+        .leaflet-control-scale {
+            background: none;
+            box-shadow: none;
+        }
+        .leaflet-control-scale-line {
+            background: transparent !important;
+            border: none !important;
+            border-bottom: 3px solid rgba(0,0,0,0.8) !important;
+            border-left: 3px solid rgba(0,0,0,0.8) !important;
+            border-right: 3px solid rgba(0,0,0,0.8) !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            color: #111;
+            font-weight: bold;
+            font-size: 12px;
+            text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
+            padding: 0 4px 2px 4px;
+        }
+        #sentinelDate {
+            font-size: 11px;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+        .sentinel-legend {
+            position: absolute;
+            bottom: 55px;
+            right: 12px;
+            z-index: 1000;
+            background-color: rgba(255, 255, 255, 0.92);
+            padding: 8px 12px;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            color: #333;
+            max-width: 220px;
+            pointer-events: auto;
+            display: none;
+        }
+        .sentinel-legend.visible {
+            display: block;
+        }
+        .sentinel-legend h4 {
+            margin: 0 0 6px 0;
+            font-size: 12px;
+        }
+        .sentinel-legend .legend-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 3px;
+        }
+        .sentinel-legend .legend-swatch {
+            width: 14px;
+            height: 14px;
+            border-radius: 2px;
+            margin-right: 6px;
+            border: 1px solid rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+        </style>
+        <title>Incendios en tiempo real en Europa(24h)</title>
+    </head>
+    <body>
+        <div id="map">
+            <!-- Título flotante integrado sobre el mapa -->
+            <div class="map-title">
+                <h1>Incendios en tiempo real (24h)</h1>
+            </div>
+            <!-- Contador de incendios activos + hora de última actualización -->
+            <div class="fire-counter" id="fireCounter">
+                Cargando datos&hellip;
+            </div>
+            <!-- Leyenda de antigüedad de los incendios (rampa de color) -->
+            <details class="fire-legend" id="fireLegend">
+                <summary>Leyenda: antigüedad del foco</summary>
+                <label style="display:flex;align-items:center;gap:5px;margin-bottom:6px;font-weight:normal;cursor:pointer;">
+                    <input type="checkbox" id="fireColorModeToggle" checked>
+                    Colorear por antigüedad
+                </label>
+                <div id="fireLegendContent"></div>
+            </details>
+            <!-- Autoría -->
+            <div class="author-box">
+                Elaborado por Daniel Kolisz Ramírez<br>
+                <a href="https://www.linkedin.com/in/daniel-k-r" target="_blank" rel="noopener">LinkedIn</a>
+            </div>
+            <!-- Créditos y atribución de datos (desplegable) -->
+            <details class="credits-box">
+                <summary>Créditos y fuentes de datos</summary>
+                <div class="credits-content">
+                    Incendios: cortesía de la <a href="https://earthdata.nasa.gov/firms" target="_blank" rel="noopener">NASA FIRMS/LANCE</a>, parte del NASA Earth Science Data and Information System (ESDIS).<br>
+                    Imágenes Sentinel-2: contiene datos Copernicus Sentinel modificados, procesados por <a href="https://www.sentinel-hub.com/" target="_blank" rel="noopener">Sentinel Hub</a>.<br>
+                    Topográfico: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, SRTM | &copy; <a href="https://opentopomap.org" target="_blank" rel="noopener">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC-BY-SA</a>).<br>
+                    Relieve: sombreado del MDT, cortesía del <a href="https://www.ign.es" target="_blank" rel="noopener">Instituto Geográfico Nacional</a> (CC-BY 4.0).<br>
+                    Mapa: <a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a> vía <a href="https://github.com/qgis2web/qgis2web" target="_blank" rel="noopener">qgis2web</a>.
+                </div>
+            </details>
+            <!-- Leyenda dinámica de Sentinel-2, se muestra al activar una capa Copernicus -->
+            <div class="sentinel-legend" id="sentinelLegend"></div>
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet.photon.js"></script>
+        <script>
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:28, minZoom:1
+        }).fitBounds([[38.86201295409303,-6.585220895074877],[41.522801170305094,-1.4675714398531157]]);
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/qgis2web/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        // remove popup's row if "visible-with-data"
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        // modify popup if contains media
+        function addClassToPopupIfMedia(content, popup) {
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            var imgTd = tempDiv.querySelector('td img');
+            if (imgTd) {
+                var src = imgTd.getAttribute('src');
+                if (/\.(jpg|jpeg|png|gif|bmp|webp|avif)$/i.test(src)) {
+                    popup._contentNode.classList.add('media');
+                    var img = popup._contentNode.querySelector('td img');
+                    if (img) {
+                        if (img.complete && img.naturalHeight > 0) {
+                            popup.update();
+                        } else {
+                            img.addEventListener('load', function() {
+                                popup.update();
+                            });
+                            img.addEventListener('error', function() {
+                                popup.update();
+                            });
+                        }
+                    }
+                } else if (/\.(mp3|wav|ogg|aac)$/i.test(src)) {
+                    var audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.src = src;
+                    imgTd.parentNode.replaceChild(audio, imgTd);
+                    popup._contentNode.classList.add('media');
+                    setTimeout(function() {
+                        popup.setContent(tempDiv.innerHTML);
+                        popup.update();
+                    }, 10);
+                } else if (/\.(mp4|webm|ogg|mov)$/i.test(src)) {
+                    var video = document.createElement('video');
+                    video.controls = true;
+                    video.src = src;
+                    video.style.width = "400px";
+                    video.style.height = "300px";
+                    video.style.maxHeight = "60vh";
+                    video.style.maxWidth = "60vw";
+                    imgTd.parentNode.replaceChild(video, imgTd);
+                    popup._contentNode.classList.add('media');
+                    video.addEventListener('loadedmetadata', function() {
+                        popup.update();
+                    });
+                    setTimeout(function() {
+                        popup.setContent(tempDiv.innerHTML);
+                        popup.update();
+                    }, 10);
+                } else {
+                    popup._contentNode.classList.remove('media');
+                }
+            } else {
+                popup._contentNode.classList.remove('media');
+            }
+        }
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+        L.control.scale({
+            position: 'bottomright',
+            metric: true,
+            imperial: false,
+            maxWidth: 150
+        }).addTo(map);
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+
+        // ----- Capas base -----
+        map.createPane('pane_GoogleHybrid_0');
+        map.getPane('pane_GoogleHybrid_0').style.zIndex = 400;
+        var layer_GoogleHybrid_0 = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+            pane: 'pane_GoogleHybrid_0',
+            opacity: 1.0,
+            attribution: '<a href="https://www.google.at/permissions/geoguidelines/attr-guide.html">Map data ©2015 Google</a>',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 20
+        });
+        map.addLayer(layer_GoogleHybrid_0);
+
+        map.createPane('pane_Topo_0');
+        map.getPane('pane_Topo_0').style.zIndex = 400;
+        var layer_Topo_0 = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            pane: 'pane_Topo_0',
+            opacity: 1.0,
+            attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+            minZoom: 1,
+            maxZoom: 17,
+            minNativeZoom: 0,
+            maxNativeZoom: 17
+        });
+
+        // ---- Relieve sombreado (hillshade) del IGN/IDEE ----
+        // Confirmado en la ficha oficial de metadatos del servicio:
+        // https://servicios.idee.es/wmts/mdt -> capa "Relieve" = sombreado del MDT.
+        map.createPane('pane_Hillshade_0');
+        map.getPane('pane_Hillshade_0').style.zIndex = 399;
+        var layer_Hillshade_0 = L.tileLayer(
+            'https://servicios.idee.es/wmts/mdt?service=WMTS&request=GetTile&version=1.0.0&layer=Relieve&style=default&tilematrixset=GoogleMapsCompatible&tilematrix={z}&tilerow={y}&tilecol={x}&format=image/jpeg',
+            {
+                pane: 'pane_Hillshade_0',
+                opacity: 1.0,
+                attribution: 'Sombreado del relieve (MDT): <a href="https://www.ign.es" target="_blank" rel="noopener">Instituto Geográfico Nacional</a> (CC-BY 4.0)',
+                minZoom: 1,
+                maxZoom: 19,
+                minNativeZoom: 0,
+                maxNativeZoom: 17
+            }
+        );
+
+        // ----- Capas Sentinel-2 (Copernicus / Sentinel Hub WMS) -----
+        // 1) Sustituye SENTINEL_WMS_BASE por tu Instance ID de la Configuration Utility
+        //    de Copernicus Data Space Ecosystem (Sentinel Hub):
+        //    https://sh.dataspace.copernicus.eu/ogc/wms/TU-INSTANCE-ID
+        // 2) Sustituye los nombres de capa (SENTINEL_LAYER_*) por los que hayas
+        //    configurado tú en esa Instance (p.ej. "1_TRUE_COLOR", "3_SWIR", etc.)
+        var SENTINEL_WMS_BASE   = 'https://sh.dataspace.copernicus.eu/ogc/wms/3d1eb8a5-e732-4a94-8b5c-bfc45b429430';
+        var SENTINEL_LAYER_TRUE  = 'TRUE_COLOR';
+        var SENTINEL_LAYER_FALSE = 'COLOR_INFRARED';
+        var SENTINEL_LAYER_SWIR  = 'SWIR';
+        var SENTINEL_LAYER_NBR   = 'NBR-ZONA-QUEMADA'; // <- confírmame el ID exacto que te quedó al guardar
+
+        map.createPane('pane_Sentinel');
+        map.getPane('pane_Sentinel').style.zIndex = 401;
+
+        function sentinelTimeRange(endDate) {
+            // Rango de 30 días terminando en endDate, para que Sentinel Hub
+            // pueda componer un mosaico sin nubes (mosaickingOrder=mostRecent)
+            var end = endDate ? new Date(endDate) : new Date();
+            var start = new Date(end);
+            start.setDate(start.getDate() - 30);
+            return start.toISOString().slice(0, 10) + 'T00:00:00Z/' + end.toISOString().slice(0, 10) + 'T23:59:59Z';
+        }
+
+        function makeSentinelLayer(layerName) {
+            return L.tileLayer.wms(SENTINEL_WMS_BASE, {
+                pane: 'pane_Sentinel',
+                layers: layerName,
+                format: 'image/png',
+                transparent: true,
+                version: '1.3.0',
+                time: sentinelTimeRange(),
+                maxcc: 30, // % máximo de nubes admitido (coincide con lo configurado en la capa)
+                priority: 'mostRecent', // fuerza a que siempre traiga la escena más reciente disponible
+                attribution: 'Contiene datos Copernicus Sentinel modificados, procesados por <a href="https://www.sentinel-hub.com/" target="_blank" rel="noopener">Sentinel Hub</a>'
+            });
+        }
+
+        var layer_sentinel_true  = makeSentinelLayer(SENTINEL_LAYER_TRUE);
+        var layer_sentinel_false = makeSentinelLayer(SENTINEL_LAYER_FALSE);
+        var layer_sentinel_swir  = makeSentinelLayer(SENTINEL_LAYER_SWIR);
+        var layer_sentinel_nbr   = makeSentinelLayer(SENTINEL_LAYER_NBR);
+        var sentinelLayers = [layer_sentinel_true, layer_sentinel_false, layer_sentinel_swir, layer_sentinel_nbr];
+
+        // ----- Capa de incendios -----
+        function pop_msfires_snpp_24hrs_1(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">latitude</th>\
+                        <td class="visible-with-data" id="latitude">' + (feature.properties['latitude'] !== null ? autolinker.link(String(feature.properties['latitude']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">longitude</th>\
+                        <td class="visible-with-data" id="longitude">' + (feature.properties['longitude'] !== null ? autolinker.link(String(feature.properties['longitude']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Fecha de detección</th>\
+                        <td class="visible-with-data" id="acq_date">' + (feature.properties['acq_date'] !== null ? autolinker.link(String(feature.properties['acq_date']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Potencia térmica (MW)</th>\
+                        <td class="visible-with-data" id="frp">' + (feature.properties['frp'] !== null ? autolinker.link(String(feature.properties['frp']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Hora de detección (UTC)</th>\
+                        <td class="visible-with-data" id="horas">' + (feature.properties['horas'] !== null ? autolinker.link(String(feature.properties['horas']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        // Rampa de color según la antigüedad de la detección (más nuevo = más intenso)
+        var FIRE_COLOR_RAMP = [
+            { maxHours: 3,  color: '#e31a1c', label: 'Últimas 3 horas' },
+            { maxHours: 6,  color: '#fc4e2a', label: 'Entre 3 y 6 horas' },
+            { maxHours: 12, color: '#fd8d3c', label: 'Entre 6 y 12 horas' },
+            { maxHours: 18, color: '#cc7722', label: 'Entre 12 y 18 horas' },
+            { maxHours: Infinity, color: '#6b3e1a', label: 'Más de 18 horas' }
+        ];
+        var FIRE_FLAT_COLOR = 'rgba(231,113,72,1.0)'; // color único cuando el interruptor está desactivado
+        var fireColorByAge = true;
+
+        function fireHoursAgo(feature) {
+            var props = feature.properties || {};
+            if (!props.acq_date || props.acq_time === undefined || props.acq_time === null) return null;
+            var parts = props.acq_date.split('-');
+            var timeStr = String(Math.floor(props.acq_time)).padStart(4, '0');
+            var detected = Date.UTC(
+                parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10),
+                parseInt(timeStr.slice(0, 2), 10), parseInt(timeStr.slice(2, 4), 10)
+            );
+            return (Date.now() - detected) / 3600000;
+        }
+
+        function fireColor(feature) {
+            if (!fireColorByAge) return FIRE_FLAT_COLOR;
+            var hoursAgo = fireHoursAgo(feature);
+            if (hoursAgo === null) return FIRE_FLAT_COLOR; // color de respaldo si faltan datos de fecha/hora
+            for (var i = 0; i < FIRE_COLOR_RAMP.length; i++) {
+                if (hoursAgo < FIRE_COLOR_RAMP[i].maxHours) return FIRE_COLOR_RAMP[i].color;
+            }
+            return FIRE_COLOR_RAMP[FIRE_COLOR_RAMP.length - 1].color;
+        }
+
+        function style_msfires_snpp_24hrs_1_0(feature) {
+            return {
+                pane: 'pane_msfires_snpp_24hrs_1',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: fireColor(feature),
+                interactive: true,
+            }
+        }
+
+        // Genera la leyenda a partir de la misma rampa de color usada arriba
+        document.getElementById('fireLegendContent').innerHTML = FIRE_COLOR_RAMP.map(function(tramo) {
+            return '<div class="legend-row"><span class="legend-swatch" style="background:' + tramo.color + '"></span>' + tramo.label + '</div>';
+        }).join('');
+
+        // Interruptor: colorear por antigüedad vs. color único (recolorea al instante,
+        // sin esperar al siguiente auto-refresco)
+        document.getElementById('fireColorModeToggle').addEventListener('change', function(e) {
+            fireColorByAge = e.target.checked;
+            document.getElementById('fireLegendContent').style.display = fireColorByAge ? 'block' : 'none';
+            layer_msfires_snpp_24hrs_1.eachLayer(function(lyr) {
+                if (lyr.feature) lyr.setStyle(style_msfires_snpp_24hrs_1_0(lyr.feature));
+            });
+        });
+        map.createPane('pane_msfires_snpp_24hrs_1');
+        map.getPane('pane_msfires_snpp_24hrs_1').style.zIndex = 402;
+        map.getPane('pane_msfires_snpp_24hrs_1').style['mix-blend-mode'] = 'normal';
+        function pointToLayer_msfires_snpp_24hrs_1_0(feature, latlng) {
+            return L.circleMarker(latlng, style_msfires_snpp_24hrs_1_0(feature));
+        }
+        var layer_msfires_snpp_24hrs_1 = L.geoJson(null, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_msfires_snpp_24hrs_1',
+            layerName: 'layer_msfires_snpp_24hrs_1',
+            pane: 'pane_msfires_snpp_24hrs_1',
+            pointToLayer: pointToLayer_msfires_snpp_24hrs_1_0,
+            onEachFeature: pop_msfires_snpp_24hrs_1
+        });
+        bounds_group.addLayer(layer_msfires_snpp_24hrs_1);
+        map.addLayer(layer_msfires_snpp_24hrs_1);
+
+        // ----- Control de capas (base = radio, overlays = checkbox) -----
+        var baseTree = [
+            {label: "Google Hybrid", layer: layer_GoogleHybrid_0},
+            {label: "Topográfico (relieve)", layer: layer_Topo_0},
+            {label: "Relieve", layer: layer_Hillshade_0},
+        ];
+        var overlaysTree = [
+            {label: '<img src="legend/msfires_snpp_24hrs_1.png" /> Incendios activos (ms:fires_snpp_24hrs)', layer: layer_msfires_snpp_24hrs_1},
+            {label: 'Sentinel-2 (Copernicus) &nbsp; <input type="date" id="sentinelDate" onclick="event.stopPropagation()">',
+             children: [
+                {label: 'NBR (zona quemada)', layer: layer_sentinel_nbr},
+                {label: 'SWIR', layer: layer_sentinel_swir},
+                {label: 'Falso color (vegetación)', layer: layer_sentinel_false},
+                {label: 'Color natural', layer: layer_sentinel_true},
+             ]},
+        ];
+        var lay = L.control.layers.tree(baseTree, overlaysTree, {
+            collapsed: true,
+        });
+        lay.addTo(map);
+
+        // Las capas Sentinel-2 son mutuamente excluyentes (solo una visible a la vez),
+        // pero al ser checkboxes normales (no radio), sí se pueden desmarcar del todo.
+        // Además, cada una muestra su propia leyenda mientras esté activa.
+        var sentinelLegendEl = document.getElementById('sentinelLegend');
+        var sentinelLegends = {}; // se rellena más abajo, tras crear las capas (por referencia de objeto)
+
+        function updateSentinelLegend() {
+            var activeLayer = sentinelLayers.find(function(lyr) { return map.hasLayer(lyr); });
+            if (!activeLayer || !sentinelLegends[L.stamp(activeLayer)]) {
+                sentinelLegendEl.classList.remove('visible');
+                sentinelLegendEl.innerHTML = '';
+                return;
+            }
+            sentinelLegendEl.innerHTML = sentinelLegends[L.stamp(activeLayer)];
+            sentinelLegendEl.classList.add('visible');
+        }
+
+        map.on('overlayadd', function(e) {
+            if (sentinelLayers.indexOf(e.layer) !== -1) {
+                sentinelLayers.forEach(function(lyr) {
+                    if (lyr !== e.layer && map.hasLayer(lyr)) {
+                        map.removeLayer(lyr);
+                    }
+                });
+            }
+            updateSentinelLegend();
+        });
+        map.on('overlayremove', function(e) {
+            if (sentinelLayers.indexOf(e.layer) !== -1) {
+                updateSentinelLegend();
+            }
+        });
+
+        // Contenido de leyenda por capa (usa L.stamp para asociarla a cada objeto de capa)
+        sentinelLegends[L.stamp(layer_sentinel_nbr)] =
+            '<h4>NBR — Índice de zona quemada</h4>' +
+            '<div class="legend-row"><span class="legend-swatch" style="background:#000000"></span>Quemado severo / suelo desnudo</div>' +
+            '<div class="legend-row"><span class="legend-swatch" style="background:#800000"></span>Quemado</div>' +
+            '<div class="legend-row"><span class="legend-swatch" style="background:#e60000"></span>Quemado moderado</div>' +
+            '<div class="legend-row"><span class="legend-swatch" style="background:#ff9900"></span>Afectado / bajo vigor</div>' +
+            '<div class="legend-row"><span class="legend-swatch" style="background:#ffff00"></span>Vegetación escasa</div>' +
+            '<div class="legend-row"><span class="legend-swatch" style="background:#99e64d"></span>Vegetación media</div>' +
+            '<div class="legend-row"><span class="legend-swatch" style="background:#009900"></span>Vegetación sana</div>';
+
+        sentinelLegends[L.stamp(layer_sentinel_swir)] =
+            '<h4>SWIR (B12–B8A–B4)</h4>' +
+            '<div class="legend-row"><span class="legend-swatch" style="background:#4a2e1e"></span>Zona quemada</div>' +
+            '<div class="legend-row"><span class="legend-swatch" style="background:#1f7a1f"></span>Vegetación sana</div>' +
+            '<div class="legend-row"><span class="legend-swatch" style="background:#c9a06a"></span>Suelo desnudo</div>' +
+            '<div class="legend-row"><span class="legend-swatch" style="background:#0d1a4d"></span>Agua</div>';
+
+        sentinelLegends[L.stamp(layer_sentinel_false)] =
+            '<h4>Falso color (vegetación)</h4>' +
+            '<div class="legend-row"><span class="legend-swatch" style="background:#cc0000"></span>Vegetación sana</div>' +
+            '<div class="legend-row"><span class="legend-swatch" style="background:#5a4a3a"></span>Vegetación estresada o quemada</div>' +
+            '<div class="legend-row"><span class="legend-swatch" style="background:#9a9a9a"></span>Suelo desnudo / urbano</div>' +
+            '<div class="legend-row"><span class="legend-swatch" style="background:#0d1a4d"></span>Agua</div>';
+
+        // Color natural no necesita leyenda (colores reales de la escena);
+        // no se añade entrada para layer_sentinel_true, así que simplemente no se muestra ninguna.
+
+        // Selector de fecha del grupo Sentinel-2: por defecto automático (hoy),
+        // pero el usuario puede elegir otra fecha de referencia para el mosaico
+        var sentinelDateInput = document.getElementById('sentinelDate');
+        if (sentinelDateInput) {
+            sentinelDateInput.value = new Date().toISOString().slice(0, 10);
+            sentinelDateInput.addEventListener('change', function() {
+                var range = sentinelTimeRange(sentinelDateInput.value);
+                sentinelLayers.forEach(function(lyr) {
+                    lyr.setParams({ time: range });
+                });
+            });
+        }
+
+        // ----- Carga de incendios desde el WFS de NASA FIRMS + auto-refresco -----
+        var FIRMS_WFS_URL = 'https://firms.modaps.eosdis.nasa.gov/mapserver/wfs/Europe/db27939f7f926d680715b8806f35a80c/?service=WFS&version=1.1.0&request=GetFeature&typeName=ms:fires_snpp_24hrs&outputFormat=application/json&srsName=EPSG:4326';
+        var REFRESH_MS = 15 * 60 * 1000; // cada 15 minutos. Cambia este número si quieres otra frecuencia.
+        var counterEl = document.getElementById('fireCounter');
+
+        function loadFires() {
+            fetch(FIRMS_WFS_URL)
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    (data.features || []).forEach(function(f) {
+                        if (f.properties && f.properties.acq_time !== undefined && f.properties.acq_time !== null) {
+                            var raw = String(Math.floor(f.properties.acq_time)).padStart(4, '0');
+                            f.properties.horas = raw.replace(/^(\d{2})(\d{2})$/, '$1:$2');
+                        }
+                    });
+                    layer_msfires_snpp_24hrs_1.clearLayers();
+                    layer_msfires_snpp_24hrs_1.addData(data);
+                    var total = (data.features || []).length;
+                    var now = new Date();
+                    var hh = String(now.getHours()).padStart(2, '0');
+                    var mm = String(now.getMinutes()).padStart(2, '0');
+                    counterEl.innerHTML = '<b>' + total + '</b> incendios activos (24h)<br>Actualizado a las ' + hh + ':' + mm;
+                })
+                .catch(function(err) {
+                    console.error('Error cargando datos de FIRMS:', err);
+                    counterEl.innerHTML = 'No se pudieron cargar los datos.<br>Reintentando en el próximo ciclo...';
+                });
+        }
+
+        loadFires();
+        setInterval(loadFires, REFRESH_MS);
+        </script>
+    </body>
+</html>
