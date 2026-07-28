@@ -23,139 +23,149 @@
         <meta name="twitter:description" content="Incendios activos en Europa en tiempo real: datos NASA FIRMS, imágenes Sentinel-2 y cartografía del IGN.">
         <meta name="description" content="Incendios activos en Europa en tiempo real: datos NASA FIRMS, imágenes Sentinel-2 y cartografía del IGN.">
         <style>
+        :root {
+            --panel-bg: rgba(255, 255, 255, 0.96);
+            --panel-border: 1px solid rgba(15, 23, 42, 0.08);
+            --panel-radius: 10px;
+            --panel-shadow: 0 4px 14px rgba(15, 23, 42, 0.12), 0 1px 3px rgba(15, 23, 42, 0.08);
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --accent: #b3261e;
+            --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
         html, body, #map {
             width: 100%;
             height: 100%;
             padding: 0;
             margin: 0;
         }
+        .map-panel {
+            background: var(--panel-bg);
+            border: var(--panel-border);
+            border-radius: var(--panel-radius);
+            box-shadow: var(--panel-shadow);
+            font-family: var(--font-main);
+            color: var(--text-primary);
+            pointer-events: auto;
+            backdrop-filter: blur(6px);
+        }
         .map-title {
             position: absolute;
             top: 12px;
             left: 60px;
             z-index: 1000;
-            background-color: rgba(255, 255, 255, 0.92);
-            padding: 8px 16px;
-            border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-            font-family: Arial, Helvetica, sans-serif;
-            pointer-events: auto;
+            padding: 10px 18px;
         }
         .map-title h1 {
             margin: 0;
-            font-size: 16px;
-            font-weight: bold;
-            color: #000000;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.1px;
+            color: var(--text-primary);
         }
         .fire-counter {
             position: absolute;
-            top: 62px;
             left: 60px;
             z-index: 1000;
-            background-color: rgba(255, 255, 255, 0.92);
-            padding: 6px 16px;
-            border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-            font-family: Arial, Helvetica, sans-serif;
-            pointer-events: auto;
-            font-size: 13px;
-            color: #333;
+            padding: 8px 18px;
+            font-size: 12.5px;
+            color: var(--text-secondary);
+            line-height: 1.5;
         }
         .fire-counter b {
-            color: #d84315;
-            font-size: 15px;
+            color: var(--accent);
+            font-size: 16px;
+            font-weight: 700;
         }
         .fire-legend {
             position: absolute;
-            top: 112px;
             left: 60px;
             z-index: 1000;
-            background-color: rgba(255, 255, 255, 0.92);
-            padding: 4px 10px;
-            border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 11px;
-            color: #333;
-            pointer-events: auto;
+            padding: 2px 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
         }
         .fire-legend summary {
             cursor: pointer;
-            font-weight: bold;
-            font-size: 11px;
-            padding: 4px 0;
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--text-primary);
+            padding: 8px 0;
             list-style: none;
+            letter-spacing: 0.1px;
         }
         .fire-legend summary::-webkit-details-marker {
             display: none;
         }
         .fire-legend summary::before {
-            content: "▸ ";
+            content: "▸";
+            display: inline-block;
+            width: 12px;
+            color: var(--text-secondary);
         }
         .fire-legend[open] summary::before {
-            content: "▾ ";
+            content: "▾";
         }
         .fire-legend .legend-row {
             display: flex;
             align-items: center;
-            margin-bottom: 3px;
+            margin-bottom: 5px;
             white-space: nowrap;
         }
         .fire-legend .legend-swatch {
-            width: 12px;
-            height: 12px;
+            width: 11px;
+            height: 11px;
             border-radius: 50%;
-            margin-right: 6px;
-            border: 1px solid rgba(0,0,0,0.3);
+            margin-right: 8px;
+            border: 1px solid rgba(0,0,0,0.15);
             flex-shrink: 0;
         }
         .credits-box {
             position: absolute;
-            bottom: 12px;
             left: 12px;
             z-index: 1000;
-            background-color: rgba(255, 255, 255, 0.88);
-            padding: 4px 10px;
-            border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 10px;
-            line-height: 1.4;
-            color: #333;
+            padding: 2px 14px;
+            font-size: 11px;
+            line-height: 1.5;
+            color: var(--text-secondary);
             max-width: 260px;
-            pointer-events: auto;
         }
         .credits-box summary {
             cursor: pointer;
-            font-weight: bold;
-            font-size: 11px;
-            padding: 4px 0;
+            font-weight: 600;
+            font-size: 11.5px;
+            color: var(--text-primary);
+            padding: 8px 0;
             list-style: none;
         }
         .credits-box .author-line {
             font-size: 11px;
-            font-weight: bold;
-            padding: 4px 0 2px 0;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            margin-bottom: 2px;
+            font-weight: 600;
+            color: var(--text-primary);
+            padding: 8px 0 6px 0;
+            border-bottom: var(--panel-border);
+            margin-bottom: 4px;
         }
         .credits-box .author-line a {
-            font-weight: normal;
+            font-weight: 400;
         }
         .credits-box summary::-webkit-details-marker {
             display: none;
         }
         .credits-box summary::before {
-            content: "▸ ";
+            content: "▸";
+            display: inline-block;
+            width: 12px;
+            color: var(--text-secondary);
         }
         .credits-box[open] summary::before {
-            content: "▾ ";
+            content: "▾";
         }
         .credits-box .credits-content {
-            padding-bottom: 6px;
+            padding-bottom: 8px;
         }
         .credits-box a {
-            color: #1a5276;
+            color: #2c5aa0;
             text-decoration: none;
         }
         .credits-box a:hover {
@@ -163,30 +173,24 @@
         }
         .author-box {
             position: absolute;
-            bottom: 58px;
             left: 12px;
             z-index: 1000;
-            background-color: rgba(255, 255, 255, 0.92);
-            padding: 8px 14px;
-            border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 14px;
-            font-weight: bold;
-            color: #222;
-            pointer-events: auto;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.4;
         }
         .author-box a {
-            color: #1a5276;
+            color: #2c5aa0;
             text-decoration: none;
-            font-size: 13px;
+            font-size: 12px;
+            font-weight: 400;
         }
         .author-box a:hover {
             text-decoration: underline;
         }
-        /* Escala gráfica: se quita el fondo blanco tipo "pastilla" y se deja
-           solo la línea con el número, con contorno blanco para que se lea
-           bien encima de cualquier capa base */
+        /* Escala gráfica: solo la línea con el número, sin caja de fondo */
         .leaflet-control-scale {
             background: none;
             box-shadow: none;
@@ -194,13 +198,14 @@
         .leaflet-control-scale-line {
             background: transparent !important;
             border: none !important;
-            border-bottom: 3px solid rgba(0,0,0,0.8) !important;
-            border-left: 3px solid rgba(0,0,0,0.8) !important;
-            border-right: 3px solid rgba(0,0,0,0.8) !important;
+            border-bottom: 3px solid rgba(30,41,59,0.85) !important;
+            border-left: 3px solid rgba(30,41,59,0.85) !important;
+            border-right: 3px solid rgba(30,41,59,0.85) !important;
             border-radius: 0 !important;
             box-shadow: none !important;
-            color: #111;
-            font-weight: bold;
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-weight: 600;
             font-size: 12px;
             text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
             padding: 0 4px 2px 4px;
@@ -209,42 +214,103 @@
             font-size: 11px;
             margin-left: 4px;
             vertical-align: middle;
+            font-family: var(--font-main);
         }
         .sentinel-legend {
             position: absolute;
             bottom: 55px;
             right: 12px;
             z-index: 1000;
-            background-color: rgba(255, 255, 255, 0.92);
-            padding: 8px 12px;
-            border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 11px;
-            color: #333;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: var(--text-secondary);
             max-width: 220px;
-            pointer-events: auto;
             display: none;
         }
         .sentinel-legend.visible {
             display: block;
         }
         .sentinel-legend h4 {
-            margin: 0 0 6px 0;
-            font-size: 12px;
+            margin: 0 0 8px 0;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-primary);
         }
         .sentinel-legend .legend-row {
             display: flex;
             align-items: center;
-            margin-bottom: 3px;
+            margin-bottom: 5px;
         }
         .sentinel-legend .legend-swatch {
-            width: 14px;
-            height: 14px;
-            border-radius: 2px;
-            margin-right: 6px;
-            border: 1px solid rgba(0,0,0,0.2);
+            width: 13px;
+            height: 13px;
+            border-radius: 3px;
+            margin-right: 8px;
+            border: 1px solid rgba(0,0,0,0.15);
             flex-shrink: 0;
+        }
+        .municipios-box {
+            position: absolute;
+            left: 60px;
+            z-index: 1000;
+            padding: 2px 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            max-width: 230px;
+            max-height: 260px;
+            overflow-y: auto;
+            display: none;
+        }
+        .municipios-box.visible {
+            display: block;
+        }
+        .municipios-box summary {
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--text-primary);
+            padding: 8px 0;
+            list-style: none;
+        }
+        .municipios-box summary::-webkit-details-marker {
+            display: none;
+        }
+        .municipios-box summary::before {
+            content: "▸";
+            display: inline-block;
+            width: 12px;
+            color: var(--text-secondary);
+        }
+        .municipios-box[open] summary::before {
+            content: "▾";
+        }
+        .municipios-box ul {
+            margin: 0 0 8px 0;
+            padding-left: 18px;
+        }
+        .municipios-box li {
+            margin-bottom: 3px;
+        }
+        .municipios-box a {
+            color: #2c5aa0;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .municipios-box a:hover {
+            text-decoration: underline;
+        }
+        .municipio-tooltip {
+            background: none;
+            border: none;
+            box-shadow: none;
+            font-family: var(--font-main);
+            font-size: 13px;
+            font-weight: 700;
+            color: #000000;
+            text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 0 3px #fff;
+        }
+        .municipio-tooltip::before {
+            display: none !important;
         }
         </style>
         <title>Incendios en tiempo real en Europa(24h)</title>
@@ -252,15 +318,15 @@
     <body>
         <div id="map">
             <!-- Título flotante integrado sobre el mapa -->
-            <div class="map-title">
+            <div class="map-title map-panel">
                 <h1>Incendios en tiempo real (24h)</h1>
             </div>
             <!-- Contador de incendios activos + hora de última actualización -->
-            <div class="fire-counter" id="fireCounter">
+            <div class="fire-counter map-panel" id="fireCounter">
                 Cargando datos&hellip;
             </div>
             <!-- Leyenda de antigüedad de los incendios (rampa de color) -->
-            <details class="fire-legend" id="fireLegend">
+            <details class="fire-legend map-panel" id="fireLegend">
                 <summary>Leyenda: antigüedad del foco</summary>
                 <label style="display:flex;align-items:center;gap:5px;margin-bottom:6px;font-weight:normal;cursor:pointer;">
                     <input type="checkbox" id="fireColorModeToggle" checked>
@@ -269,23 +335,29 @@
                 <div id="fireLegendContent"></div>
             </details>
             <!-- Autoría -->
-            <div class="author-box">
+            <div class="author-box map-panel">
                 Elaborado por Daniel Kolisz Ramírez<br>
                 <a href="https://www.linkedin.com/in/daniel-k-r" target="_blank" rel="noopener">LinkedIn</a>
             </div>
             <!-- Créditos y atribución de datos (desplegable) -->
-            <details class="credits-box">
+            <details class="credits-box map-panel">
                 <summary>Créditos y fuentes de datos</summary>
                 <div class="credits-content">
                     Incendios: cortesía de la <a href="https://earthdata.nasa.gov/firms" target="_blank" rel="noopener">NASA FIRMS/LANCE</a>, parte del NASA Earth Science Data and Information System (ESDIS).<br>
                     Imágenes Sentinel-2: contiene datos Copernicus Sentinel modificados, procesados por <a href="https://www.sentinel-hub.com/" target="_blank" rel="noopener">Sentinel Hub</a>.<br>
                     Topográfico: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, SRTM | &copy; <a href="https://opentopomap.org" target="_blank" rel="noopener">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener">CC-BY-SA</a>).<br>
                     Relieve: sombreado del MDT, cortesía del <a href="https://www.ign.es" target="_blank" rel="noopener">Instituto Geográfico Nacional</a> (CC-BY 4.0).<br>
+                    Límites municipales: <a href="https://centrodedescargas.cnig.es" target="_blank" rel="noopener">Centro Nacional de Información Geográfica (CNIG)</a>, Instituto Geográfico Nacional (CC-BY 4.0).<br>
                     Mapa: <a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a> vía <a href="https://github.com/qgis2web/qgis2web" target="_blank" rel="noopener">qgis2web</a>.
                 </div>
             </details>
             <!-- Leyenda dinámica de Sentinel-2, se muestra al activar una capa Copernicus -->
-            <div class="sentinel-legend" id="sentinelLegend"></div>
+            <div class="sentinel-legend map-panel" id="sentinelLegend"></div>
+            <!-- Lista de municipios con algún foco activo dentro de su término -->
+            <details class="municipios-box map-panel" id="municipiosBox">
+                <summary>Municipios con focos activos</summary>
+                <div id="municipiosListContent"></div>
+            </details>
         </div>
         <script src="js/qgis2web_expressions.js"></script>
         <script src="js/leaflet.js"></script>
@@ -389,6 +461,19 @@
         }
 
         // ----- Capas base -----
+        map.createPane('pane_GoogleSat_0');
+        map.getPane('pane_GoogleSat_0').style.zIndex = 400;
+        var layer_GoogleSat_0 = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            pane: 'pane_GoogleSat_0',
+            opacity: 1.0,
+            attribution: '<a href="https://www.google.at/permissions/geoguidelines/attr-guide.html">Map data ©2015 Google</a>',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 20
+        });
+        map.addLayer(layer_GoogleSat_0);
+
         map.createPane('pane_GoogleHybrid_0');
         map.getPane('pane_GoogleHybrid_0').style.zIndex = 400;
         var layer_GoogleHybrid_0 = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
@@ -400,7 +485,6 @@
             minNativeZoom: 0,
             maxNativeZoom: 20
         });
-        map.addLayer(layer_GoogleHybrid_0);
 
         map.createPane('pane_Topo_0');
         map.getPane('pane_Topo_0').style.zIndex = 400;
@@ -431,6 +515,170 @@
                 maxNativeZoom: 17
             }
         );
+
+        // ----- Municipios afectados (cruce foco activo x polígono de municipio) -----
+        // El archivo municipios.geojson (simplificado, ~5.5MB) debe estar en la raíz
+        // del proyecto, junto a index.html. Se carga solo la primera vez que se activa
+        // la capa (no en la carga inicial de la página).
+        var MUNICIPIOS_URL = 'municipios.geojson';
+        var municipiosData = null;
+        var municipiosLoading = false;
+        var lastFireFeatures = [];
+        var municipiosBoxEl = document.getElementById('municipiosBox');
+        var municipiosListEl = document.getElementById('municipiosListContent');
+
+        function computeBBox(geometry) {
+            var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            function walk(coords) {
+                if (typeof coords[0] === 'number') {
+                    if (coords[0] < minX) minX = coords[0];
+                    if (coords[0] > maxX) maxX = coords[0];
+                    if (coords[1] < minY) minY = coords[1];
+                    if (coords[1] > maxY) maxY = coords[1];
+                } else {
+                    for (var i = 0; i < coords.length; i++) walk(coords[i]);
+                }
+            }
+            walk(geometry.coordinates);
+            return [minX, minY, maxX, maxY];
+        }
+
+        function pointInRing(lon, lat, ring) {
+            var inside = false;
+            for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+                var xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+                var intersect = ((yi > lat) !== (yj > lat)) &&
+                    (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        }
+
+        function pointInPolygonCoords(lon, lat, polygonCoords) {
+            if (!pointInRing(lon, lat, polygonCoords[0])) return false;
+            for (var h = 1; h < polygonCoords.length; h++) {
+                if (pointInRing(lon, lat, polygonCoords[h])) return false; // dentro de un agujero
+            }
+            return true;
+        }
+
+        function pointInGeometry(lon, lat, geometry) {
+            if (geometry.type === 'Polygon') {
+                return pointInPolygonCoords(lon, lat, geometry.coordinates);
+            } else if (geometry.type === 'MultiPolygon') {
+                for (var p = 0; p < geometry.coordinates.length; p++) {
+                    if (pointInPolygonCoords(lon, lat, geometry.coordinates[p])) return true;
+                }
+            }
+            return false;
+        }
+
+        var municipioFireCount = {};
+
+        var layer_municipios_afectados = L.geoJson(null, {
+            style: { color: '#c0392b', weight: 1.5, fillColor: '#e67e63', fillOpacity: 0.22 },
+            onEachFeature: function(feature, layer) {
+                layer.bindTooltip(feature.properties.NAMEUNIT, {
+                    sticky: true,
+                    className: 'municipio-tooltip'
+                });
+                layer.bindPopup(function() {
+                    var count = municipioFireCount[feature.properties.NATCODE] || 0;
+                    return '<b>' + feature.properties.NAMEUNIT + '</b><br>Número de focos activos: ' + count + ' focos';
+                });
+            }
+        });
+
+        var municipioLayerByCode = {};
+
+        function updateAffectedMunicipios() {
+            if (!municipiosData || !map.hasLayer(layer_municipios_afectados)) return;
+            var matched = {}; // NATCODE -> feature del municipio
+            municipioFireCount = {};
+            for (var i = 0; i < lastFireFeatures.length; i++) {
+                var fire = lastFireFeatures[i];
+                if (!fire.geometry || fire.geometry.type !== 'Point') continue;
+                var lon = fire.geometry.coordinates[0], lat = fire.geometry.coordinates[1];
+                for (var m = 0; m < municipiosData.features.length; m++) {
+                    var muni = municipiosData.features[m];
+                    var bbox = muni._bbox;
+                    if (lon < bbox[0] || lon > bbox[2] || lat < bbox[1] || lat > bbox[3]) continue;
+                    if (pointInGeometry(lon, lat, muni.geometry)) {
+                        var code = muni.properties.NATCODE;
+                        matched[code] = muni;
+                        municipioFireCount[code] = (municipioFireCount[code] || 0) + 1;
+                        break; // un foco solo puede estar dentro de un municipio
+                    }
+                }
+            }
+            layer_municipios_afectados.clearLayers();
+            municipioLayerByCode = {};
+            Object.keys(matched).forEach(function(code) {
+                layer_municipios_afectados.addData(matched[code]);
+            });
+            layer_municipios_afectados.eachLayer(function(lyr) {
+                municipioLayerByCode[lyr.feature.properties.NATCODE] = lyr;
+            });
+            var entries = Object.keys(matched).map(function(code) {
+                return { code: code, name: matched[code].properties.NAMEUNIT, count: municipioFireCount[code] };
+            });
+            entries.sort(function(a, b) { return a.name.localeCompare(b.name, 'es'); });
+            if (entries.length) {
+                municipiosListEl.innerHTML = '<ul>' + entries.map(function(e) {
+                    return '<li><a href="#" data-code="' + e.code + '">' + e.name + '</a> (' + e.count + ')</li>';
+                }).join('') + '</ul>';
+            } else {
+                municipiosListEl.innerHTML = 'Ningún municipio con focos activos en este momento.';
+            }
+            if (typeof layoutPanels === 'function') layoutPanels();
+        }
+
+        // Clic en un nombre de la lista -> centra, hace zoom y abre su tarjeta de información
+        municipiosListEl.addEventListener('click', function(e) {
+            var link = e.target.closest('a[data-code]');
+            if (!link) return;
+            e.preventDefault();
+            var lyr = municipioLayerByCode[link.getAttribute('data-code')];
+            if (lyr) {
+                map.flyToBounds(lyr.getBounds(), { maxZoom: 13, duration: 0.8 });
+                lyr.openPopup();
+            }
+        });
+
+        map.on('overlayadd', function(e) {
+            if (e.layer === layer_municipios_afectados) {
+                municipiosBoxEl.classList.add('visible');
+                if (typeof layoutPanels === 'function') layoutPanels();
+                if (municipiosData) {
+                    updateAffectedMunicipios();
+                } else if (!municipiosLoading) {
+                    municipiosLoading = true;
+                    municipiosListEl.innerHTML = 'Cargando municipios (~1-2 MB)...';
+                    fetch(MUNICIPIOS_URL)
+                        .then(function(r) {
+                            if (!r.ok) throw new Error('HTTP ' + r.status);
+                            return r.json();
+                        })
+                        .then(function(geo) {
+                            geo.features.forEach(function(f) { f._bbox = computeBBox(f.geometry); });
+                            municipiosData = geo;
+                            municipiosLoading = false;
+                            updateAffectedMunicipios();
+                        })
+                        .catch(function(err) {
+                            console.error('Error cargando municipios.geojson:', err);
+                            municipiosListEl.innerHTML = 'No se pudo cargar el archivo municipios.geojson. Comprueba que está subido junto a index.html.';
+                            municipiosLoading = false;
+                        });
+                }
+            }
+        });
+        map.on('overlayremove', function(e) {
+            if (e.layer === layer_municipios_afectados) {
+                municipiosBoxEl.classList.remove('visible');
+                if (typeof layoutPanels === 'function') layoutPanels();
+            }
+        });
 
         // ----- Capas Sentinel-2 (Copernicus / Sentinel Hub WMS) -----
         // 1) Sustituye SENTINEL_WMS_BASE por tu Instance ID de la Configuration Utility
@@ -591,12 +839,14 @@
 
         // ----- Control de capas (base = radio, overlays = checkbox) -----
         var baseTree = [
+            {label: "Google Satellite", layer: layer_GoogleSat_0},
             {label: "Google Hybrid", layer: layer_GoogleHybrid_0},
             {label: "Topográfico (relieve)", layer: layer_Topo_0},
             {label: "Relieve", layer: layer_Hillshade_0},
         ];
         var overlaysTree = [
             {label: '<img src="legend/msfires_snpp_24hrs_1.png" /> Incendios activos (ms:fires_snpp_24hrs)', layer: layer_msfires_snpp_24hrs_1},
+            {label: 'Municipios con focos activos', layer: layer_municipios_afectados},
             {label: 'Sentinel-2 (Copernicus) &nbsp; <input type="date" id="sentinelDate" onclick="event.stopPropagation()">',
              children: [
                 {label: 'NBR (zona quemada)', layer: layer_sentinel_nbr},
@@ -701,11 +951,14 @@
                     });
                     layer_msfires_snpp_24hrs_1.clearLayers();
                     layer_msfires_snpp_24hrs_1.addData(data);
+                    lastFireFeatures = data.features || [];
+                    updateAffectedMunicipios();
                     var total = (data.features || []).length;
                     var now = new Date();
                     var hh = String(now.getHours()).padStart(2, '0');
                     var mm = String(now.getMinutes()).padStart(2, '0');
                     counterEl.innerHTML = '<b>' + total + '</b> incendios activos (24h)<br>Actualizado a las ' + hh + ':' + mm;
+                    if (typeof layoutPanels === 'function') layoutPanels();
                 })
                 .catch(function(err) {
                     console.error('Error cargando datos de FIRMS:', err);
@@ -715,6 +968,43 @@
 
         loadFires();
         setInterval(loadFires, REFRESH_MS);
+
+        // ----- Posicionamiento dinámico de los cuadros flotantes -----
+        // En vez de coordenadas fijas (que se solapan si un cuadro crece al
+        // desplegarse), se recalcula la posición real de cada uno según el
+        // espacio que ocupan los anteriores en ese momento.
+        function layoutPanels() {
+            var gap = 8;
+            var topStack = [
+                document.querySelector('.map-title'),
+                document.getElementById('fireCounter'),
+                document.getElementById('fireLegend'),
+                document.getElementById('municipiosBox')
+            ];
+            var y = 12;
+            topStack.forEach(function(el) {
+                if (!el || window.getComputedStyle(el).display === 'none') return;
+                el.style.top = y + 'px';
+                y += el.offsetHeight + gap;
+            });
+
+            var bottomStack = [document.querySelector('.credits-box'), document.querySelector('.author-box')];
+            var b = 12;
+            bottomStack.forEach(function(el) {
+                if (!el) return;
+                el.style.bottom = b + 'px';
+                b += el.offsetHeight + gap;
+            });
+        }
+
+        ['fireLegend'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.addEventListener('toggle', layoutPanels);
+        });
+        municipiosBoxEl.addEventListener('toggle', layoutPanels);
+        document.querySelector('.credits-box').addEventListener('toggle', layoutPanels);
+        window.addEventListener('resize', layoutPanels);
+        layoutPanels();
         </script>
     </body>
 </html>
