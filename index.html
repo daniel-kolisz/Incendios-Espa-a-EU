@@ -845,7 +845,7 @@
             {label: "Relieve", layer: layer_Hillshade_0},
         ];
         var overlaysTree = [
-            {label: '<img src="legend/msfires_snpp_24hrs_1.png" /> Incendios activos (ms:fires_snpp_24hrs)', layer: layer_msfires_snpp_24hrs_1},
+            {label: '<img src="legend/msfires_snpp_24hrs_1.png" /> Incendios activos (VIIRS NOAA-20 y NOAA-21, 24 h)', layer: layer_msfires_snpp_24hrs_1},
             {label: 'Municipios con focos activos', layer: layer_municipios_afectados},
             {label: 'Sentinel-2 (Copernicus) &nbsp; <input type="date" id="sentinelDate" onclick="event.stopPropagation()">',
              children: [
@@ -939,11 +939,26 @@
         var REFRESH_MS = 15 * 60 * 1000; // cada 15 minutos. Cambia este número si quieres otra frecuencia.
         var counterEl = document.getElementById('fireCounter');
 
-        function loadFires() {
-            fetch(FIRMS_WFS_URL)
+        var FIRMS_CAPAS = ['fires_noaa20_24hrs', 'fires_noaa21_24hrs'];
+
+        function descargarCapa(capa) {
+            return fetch(FIRMS_WFS_URL.replace('fires_snpp_24hrs', capa))
                 .then(function(response) { return response.json(); })
-                .then(function(data) {
-                    (data.features || []).forEach(function(f) {
+                .then(function(data) { return data.features || []; })
+                .catch(function() { return null; });
+        }
+
+        function loadFires() {
+            Promise.all(FIRMS_CAPAS.map(descargarCapa))
+                .then(function(listas) {
+                    if (listas.every(function(l) { return l === null; })) {
+                        throw new Error('FIRMS no responde');
+                    }
+                    var data = {
+                        type: 'FeatureCollection',
+                        features: [].concat.apply([], listas.filter(Boolean))
+                    };
+                    data.features.forEach(function(f) {
                         if (f.properties && f.properties.acq_time !== undefined && f.properties.acq_time !== null) {
                             var raw = String(Math.floor(f.properties.acq_time)).padStart(4, '0');
                             f.properties.horas = raw.replace(/^(\d{2})(\d{2})$/, '$1:$2');
@@ -951,9 +966,9 @@
                     });
                     layer_msfires_snpp_24hrs_1.clearLayers();
                     layer_msfires_snpp_24hrs_1.addData(data);
-                    lastFireFeatures = data.features || [];
+                    lastFireFeatures = data.features;
                     updateAffectedMunicipios();
-                    var total = (data.features || []).length;
+                    var total = data.features.length;
                     var now = new Date();
                     var hh = String(now.getHours()).padStart(2, '0');
                     var mm = String(now.getMinutes()).padStart(2, '0');
